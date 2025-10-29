@@ -44,7 +44,27 @@
 </head>
 <body>
   <div id="root"></div>
-  <!-- Explicitly load and transpile the main TSX file using Babel -->
-  <script type="text/babel" data-type="module" src="./index.tsx"></script>
+  <!--
+  The content of index.tsx is now embedded directly here.
+  This avoids a 404 error when hosting on static platforms like GitHub Pages
+  that might not be configured to serve .tsx files.
+  -->
+  <script type="text/babel" data-type="module" data-presets="react,typescript">
+    import React from 'react';
+    import ReactDOM from 'react-dom/client';
+    import App from './App.tsx';
+
+    const rootElement = document.getElementById('root');
+    if (!rootElement) {
+      throw new Error("Could not find root element to mount to");
+    }
+
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  </script>
 </body>
 </html>

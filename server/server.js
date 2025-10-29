@@ -8,14 +8,17 @@
 const { WebSocketServer } = require('ws');
 const url = require('url');
 
-const wss = new WebSocketServer({ port: 8080 });
+// Use the PORT environment variable provided by Render, with a fallback for local development.
+const PORT = process.env.PORT || 8080;
+
+const wss = new WebSocketServer({ port: PORT });
 
 // In a real application, you would use a proper database (e.g., PostgreSQL, Redis).
 // For this example, we'll store messages in memory.
 const messageHistory = {}; 
 const clients = new Map(); // Map<userId, WebSocket>
 
-console.log('WebSocket server started on port 8080');
+console.log(`WebSocket server started on port ${PORT}`);
 
 wss.on('connection', (ws, req) => {
   // Extract userId from the connection URL, e.g., ws://localhost:8080?userId=user-1
