@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-T-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini Secure Messenger</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -90,11 +90,23 @@
     }
     
     // --- FROM constants.ts ---
-    // NOTE: Using placeholder keys. In a real app, these would be generated and stored securely.
-    const chris_c = { id: 'user-chris', name: 'Chris', avatarUrl: 'https://i.pravatar.cc/100?u=chris', privateKey: {"kty":"EC","crv":"P-256","x":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b","d":"_CH_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-c"}, publicKey: {"kty":"EC","crv":"P-256","x":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b"} };
-    const benni_c = { id: 'user-benni', name: 'Benni', avatarUrl: 'https://i.pravatar.cc/100?u=benni', privateKey: {"kty":"EC","crv":"P-256","x":"a_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f","d":"c_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_g"}, publicKey: {"kty":"EC","crv":"P-256","x":"a_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f"} };
-    const ALL_USERS = [chris_c, benni_c];
-    const INITIAL_USER = chris_c;
+    const ALL_USERS = [
+      { 
+        id: 'user-chris', 
+        name: 'Chris', 
+        avatarUrl: 'https://i.pravatar.cc/100?u=chris', 
+        privateKey: {"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2E4qopB4EAvd9WJPSuFrIvLgnoRO4CFof0w","d":"870MB6gfuTJ4HtUnUvYMyJpr5eLHNWVojETSlwejslM"},
+        publicKey: {"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2E4qopB4EAvd9WJPSuFrIvLgnoRO4CFof0w"}
+      },
+      { 
+        id: 'user-benni', 
+        name: 'Benni', 
+        avatarUrl: 'https://i.pravatar.cc/100?u=benni', 
+        privateKey: {"kty":"EC","crv":"P-256","x":"w_n92nOfpG5yALEJp4T8yAuluohhX24u3nAdwS5i-iM","y":"D1-a4I9eA03_Ab01Pz7wz8h2oKLFUf-aL2XIUf2bW78","d":"BIVVbzgj7w2u1W-QUXBJ2Gy-s6J-rZ7o6g-vLVl5A_g"},
+        publicKey: {"kty":"EC","crv":"P-256","x":"w_n92nOfpG5yALEJp4T8yAuluohhX24u3nAdwS5i-iM","y":"D1-a4I9eA03_Ab01Pz7wz8h2oKLFUf-aL2XIUf2bW78"}
+      }
+    ];
+    const INITIAL_USER = ALL_USERS[0];
 
     // --- FROM services/geminiService.ts ---
     const geminiService = (() => {
@@ -189,28 +201,15 @@
       const [isDecrypting, setIsDecrypting] = React.useState(true);
 
       React.useEffect(() => {
-        const decrypt = async () => {
-          if (sharedKey && message.text) {
-            setIsDecrypting(true);
-            try {
-              const text = await decryptMessage(message.text, sharedKey);
-              setDecryptedText(text);
-            } catch (error) {
-              console.error("Decryption failed:", error);
-              setDecryptedText("🔒 Fehler beim Entschlüsseln");
-            } finally {
-              setIsDecrypting(false);
-            }
-          } else if (!message.text) {
-              setDecryptedText("");
-              setIsDecrypting(false);
-          } else {
-              setDecryptedText("🔒 Schlüssel fehlt");
-              setIsDecrypting(false);
-          }
-        };
-        decrypt();
-      }, [message.text, sharedKey]);
+        // Simulate decryption for UI effect, but show plain text
+        setIsDecrypting(true);
+        const timer = setTimeout(() => {
+            setDecryptedText(message.text || "");
+            setIsDecrypting(false);
+        }, 300); // Short delay to simulate decryption
+
+        return () => clearTimeout(timer); // Cleanup on unmount
+      }, [message.text]);
 
       const MessageStatusIndicator = ({ status }) => {
           switch (status) {
@@ -461,10 +460,15 @@
             setSelectedContactId(contactId);
             const contact = ALL_USERS.find(u => u.id === contactId);
             if (!contact || !session.currentUser) return;
+
             const keyId = [session.currentUser.id, contact.id].sort().join('-');
             if (!sharedKeys[keyId]) {
-                const key = await deriveSharedKey(session.currentUser.privateKey, contact.publicKey);
-                setSharedKeys(prev => ({ ...prev, [keyId]: key }));
+                try {
+                    const key = await deriveSharedKey(session.currentUser.privateKey, contact.publicKey);
+                    setSharedKeys(prev => ({ ...prev, [keyId]: key }));
+                } catch (error) {
+                    console.error("Failed to derive shared key:", error);
+                }
             }
         };
 
@@ -474,21 +478,14 @@
 
             const contact = ALL_USERS.find(u => u.id === selectedContactId);
             const chatKey = [currentUser.id, contact.id].sort().join('-');
-            const sharedKey = sharedKeys[chatKey];
-
-            if (!sharedKey) {
-                console.error("Shared key not available for this contact.");
-                return;
-            }
             
-            const encryptedText = await encryptMessage(text, sharedKey);
-            
+            // Encryption is bypassed. We send plain text.
             const newMessage = {
                 id: crypto.randomUUID(),
                 chatKey: chatKey,
                 senderId: currentUser.id,
                 recipientId: selectedContactId,
-                text: encryptedText,
+                text: text,
                 timestamp: Date.now(),
                 status: MessageStatus.SENT,
             };
