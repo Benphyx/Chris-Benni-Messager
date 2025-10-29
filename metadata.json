@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Secure Messenger",
+  "description": "A concept for a modern, end-to-end encrypted messenger application enhanced with powerful AI features from the Gemini API. This is a UI demonstration and does not implement real encryption or networking.",
+  "requestFramePermissions": []
+}
