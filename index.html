@@ -18,443 +18,478 @@
 <!-- Load React and ReactDOM as global variables -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<!-- Load GoogleGenAI and attach it to the window object -->
-<script type="module">
-  import { GoogleGenAI } from "https://aistudiocdn.com/@google/genai@^1.27.0";
-  window.GoogleGenAI = GoogleGenAI;
-</script>
+<!-- Babel for JSX and TypeScript transpilation -->
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
   <div id="root"></div>
+
+  <!-- 1. Dedicated module script to load the ESM-only Gemini library -->
+  <script type="module">
+    try {
+      const { GoogleGenAI } = await import("https://aistudiocdn.com/@google/genai@^1.27.0");
+      window.GoogleGenAI = GoogleGenAI;
+    } catch (e) {
+      console.error("Could not load Google GenAI library. AI features will be disabled.", e);
+    }
+    // Signal that the library is ready (or has failed to load)
+    window.genaiLoaded = true;
+    document.body.dispatchEvent(new CustomEvent('genai-loaded'));
+  </script>
+
+  <!-- 2. Main application script, which waits for the module script's signal -->
   <script type="text/babel" data-presets="react,typescript">
-    // --- CONSOLIDATED APPLICATION CODE ---
-    // All .ts and .tsx files have been inlined here to create a single, deployable file.
-    
-    // --- FROM types.ts ---
-    const MessageStatus = {
-      SENT: 'sent',
-      DELIVERED: 'delivered',
-      READ: 'read',
-      SENDING: 'sending',
-      ERROR: 'error',
-    };
-    const AIFeature = {
-      SMART_REPLY: 'Smarte Antworten',
-    };
+    function initializeAndRunApp() {
+        // --- CONSOLIDATED APPLICATION CODE ---
+        // All .ts and .tsx files have been inlined here to create a single, deployable file.
+        
+        // --- FROM types.ts ---
+        const MessageStatus = {
+          SENT: 'sent',
+          DELIVERED: 'delivered',
+          READ: 'read',
+          SENDING: 'sending',
+          ERROR: 'error',
+        };
+        const AIFeature = {
+          SMART_REPLY: 'Smarte Antworten',
+        };
 
-    // --- FROM constants.ts ---
-    const ALL_USERS = [
-      { 
-        id: 'user-chris', 
-        name: 'Chris', 
-        avatarUrl: 'https://i.pravatar.cc/100?u=chris', 
-      },
-      { 
-        id: 'user-benni', 
-        name: 'Benni', 
-        avatarUrl: 'https://i.pravatar.cc/100?u=benni', 
-      }
-    ];
-    const INITIAL_USER = ALL_USERS[0];
+        // --- FROM constants.ts ---
+        const ALL_USERS = [
+          { 
+            id: 'user-chris', 
+            name: 'Chris', 
+            avatarUrl: 'https://i.pravatar.cc/100?u=chris', 
+          },
+          { 
+            id: 'user-benni', 
+            name: 'Benni', 
+            avatarUrl: 'https://i.pravatar.cc/100?u=benni', 
+          }
+        ];
+        const INITIAL_USER = ALL_USERS[0];
 
-    // --- FROM services/geminiService.ts ---
-    const geminiService = (() => {
-      let ai_instance;
-      function getAiInstance() {
-          if (ai_instance) return ai_instance;
-          try {
-              if (window.GoogleGenAI && window.process && window.process.env && window.process.env.API_KEY) {
-                  ai_instance = new window.GoogleGenAI({ apiKey: window.process.env.API_KEY });
-                  return ai_instance;
+        // --- FROM services/geminiService.ts ---
+        const geminiService = (() => {
+          let ai_instance;
+          function getAiInstance() {
+              if (ai_instance) return ai_instance;
+              try {
+                  // Check if the library was loaded by the module script
+                  if (window.GoogleGenAI) {
+                      // API_KEY is expected to be injected in environments like AI Studio
+                      if (window.process && window.process.env && window.process.env.API_KEY) {
+                          ai_instance = new window.GoogleGenAI({ apiKey: window.process.env.API_KEY });
+                          return ai_instance;
+                      }
+                  }
+              } catch (e) { /* process is not defined in browser */ }
+               if (window.GoogleGenAI) {
+                  console.warn("API_KEY not found. Gemini AI features will be disabled. This is expected if not in an environment like AI Studio.");
+                  return null;
               }
-          } catch (e) { /* process is not defined in browser */ }
-           if (window.GoogleGenAI) {
-              console.warn("API_KEY not found. Gemini AI features will be disabled. This is expected if not in an environment like AI Studio.");
+              console.warn("GoogleGenAI library not loaded. AI features disabled.");
               return null;
           }
-          console.warn("GoogleGenAI library not loaded. AI features disabled.");
-          return null;
-      }
 
-      return {
-          async getSmartReplies(conversationHistory) {
-              const ai = getAiInstance();
-              if (!ai) return [];
-              try {
-                  const lastMessage = conversationHistory.length > 0 ? conversationHistory[conversationHistory.length - 1].text : '';
-                  const prompt = `Basierend auf der letzten Nachricht "${lastMessage}", generiere 3 kurze, prägnante Antwortvorschläge auf Deutsch. Gib nur ein JSON-Array von Strings zurück, sonst nichts. Beispiel: ["Ja, gerne!", "Vielleicht später.", "Ich bin mir nicht sicher."]\n`;
-                  const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: prompt });
-                  const jsonString = response.text.trim().replace(/^```json\n?|```$/g, '');
-                  const replies = JSON.parse(jsonString);
-                  return Array.isArray(replies) ? replies.slice(0, 3) : [];
-              } catch (error) {
-                  console.error("Error getting smart replies:", error);
-                  return [];
+          return {
+              async getSmartReplies(conversationHistory) {
+                  const ai = getAiInstance();
+                  if (!ai) return [];
+                  try {
+                      const lastMessage = conversationHistory.length > 0 ? conversationHistory[conversationHistory.length - 1].text : '';
+                      const prompt = `Basierend auf der letzten Nachricht "${lastMessage}", generiere 3 kurze, prägnante Antwortvorschläge auf Deutsch. Gib nur ein JSON-Array von Strings zurück, sonst nichts. Beispiel: ["Ja, gerne!", "Vielleicht später.", "Ich bin mir nicht sicher."]\n`;
+                      const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: prompt });
+                      const jsonString = response.text.trim().replace(/^```json\n?|```$/g, '');
+                      const replies = JSON.parse(jsonString);
+                      return Array.isArray(replies) ? replies.slice(0, 3) : [];
+                  } catch (error) {
+                      console.error("Error getting smart replies:", error);
+                      return [];
+                  }
               }
-          }
-      };
-    })();
+          };
+        })();
 
-    // --- FROM services/socketService.ts ---
-    const socketService = new (class SocketService {
-      ws = null;
-      onMessageCallback = null;
-      onInitialMessagesCallback = null;
+        // --- FROM services/socketService.ts ---
+        const socketService = new (class SocketService {
+          ws = null;
+          onMessageCallback = null;
+          onInitialMessagesCallback = null;
+          onStatusUpdateCallback = null;
 
-      connect(userId, serverUrl, onMessage, onInitialMessages) {
-        return new Promise((resolve, reject) => {
-            if (this.ws) this.disconnect();
-            this.onMessageCallback = onMessage;
-            this.onInitialMessagesCallback = onInitialMessages;
-            if (!serverUrl || !serverUrl.startsWith('ws')) {
-                reject(new Error("Invalid WebSocket URL. It should start with ws:// or wss://"));
-                return;
-            }
-            this.ws = new WebSocket(`${serverUrl}?userId=${userId}`);
-            this.ws.onopen = () => resolve();
-            this.ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'newMessage' && this.onMessageCallback) this.onMessageCallback(data.payload);
-                if (data.type === 'initialMessages' && this.onInitialMessagesCallback) this.onInitialMessagesCallback(data.payload);
-            };
-            this.ws.onclose = () => this.ws = null;
-            this.ws.onerror = (error) => {
-                reject(error);
-                this.ws = null;
-            };
-        });
-      }
-      sendMessage(message, recipientId) {
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          this.ws.send(JSON.stringify({ type: 'sendMessage', payload: { message, recipientId } }));
-        }
-      }
-      disconnect() {
-        this.ws?.close();
-        this.ws = null;
-      }
-    })();
-    
-    // --- FROM components/icons.tsx ---
-    const SendIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>);
-    const SparklesIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>);
-    const CheckIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>);
-    const DoubleCheckIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
-    const ClockIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
-    const XCircleIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
-
-    // --- FROM components/MessageBubble.tsx ---
-    const MessageBubble = ({ message, currentUserId }) => {
-      const MessageStatusIndicator = ({ status }) => {
-          switch (status) {
-              case MessageStatus.SENDING: return <ClockIcon className="h-4 w-4 text-slate-400" />;
-              case MessageStatus.SENT: return <CheckIcon className="h-4 w-4 text-slate-400" />;
-              case MessageStatus.DELIVERED: return <DoubleCheckIcon className="h-4 w-4 text-slate-400" />;
-              case MessageStatus.READ: return <DoubleCheckIcon className="h-4 w-4 text-sky-400" />;
-              case MessageStatus.ERROR: return <XCircleIcon className="h-4 w-4 text-red-500" />;
-              default: return null;
-          }
-      };
-
-      const isCurrentUser = message.senderId === currentUserId;
-      const bubbleClasses = isCurrentUser ? 'bg-sky-600 text-white self-end rounded-br-none' : 'bg-slate-700 text-slate-200 self-start rounded-bl-none';
-      const time = new Date(message.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-
-      return (
-        <div className={`flex items-end gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
-          <div className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl ${bubbleClasses}`}>
-            <p className="break-words">{message.text}</p>
-            <div className="flex items-center justify-end gap-1 mt-1">
-              <span className="text-xs opacity-70">{time}</span>
-              {isCurrentUser && <MessageStatusIndicator status={message.status} />}
-            </div>
-          </div>
-        </div>
-      );
-    };
-    
-    // --- FROM components/MessageInput.tsx ---
-    const MessageInput = ({ onSendMessage, conversationContext }) => {
-      const [text, setText] = React.useState('');
-      const [isAiMenuOpen, setIsAiMenuOpen] => React.useState(false);
-      const [isLoadingAi, setIsLoadingAi] = React.useState(false);
-      const [smartReplies, setSmartReplies] = React.useState([]);
-
-      const handleSendMessage = (e) => {
-        e?.preventDefault();
-        if (text.trim()) {
-          onSendMessage(text.trim());
-          setText('');
-          setSmartReplies([]);
-        }
-      };
-
-      const handleAiAction = React.useCallback(async (action) => {
-        setIsLoadingAi(true);
-        setIsAiMenuOpen(false);
-        try {
-            switch(action) {
-                case AIFeature.SMART_REPLY:
-                    const replies = await geminiService.getSmartReplies(conversationContext);
-                    setSmartReplies(replies);
-                    break;
-            }
-        } finally {
-            setIsLoadingAi(false);
-        }
-      }, [conversationContext, text]);
-      
-      const AIFeatureButton = ({ onClick, children, disabled }) => (<button onClick={onClick} disabled={disabled} className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition-colors">{children}</button>);
-
-      return (
-        <div className="bg-slate-800 p-4 border-t border-slate-700">
-            {smartReplies.length > 0 && (
-                 <div className="flex gap-2 mb-3">{smartReplies.map((reply, i) => (<button key={i} onClick={() => onSendMessage(reply)} className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-full">{reply}</button>))}</div>
-            )}
-          <div className="relative flex items-center gap-2">
-            <div className="relative">
-              <button onClick={() => setIsAiMenuOpen(!isAiMenuOpen)} className="p-2 rounded-full hover:bg-slate-700 text-slate-400 hover:text-sky-400"><SparklesIcon className="h-6 w-6" /></button>
-              {isAiMenuOpen && (
-                <div className="absolute bottom-full mb-2 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 overflow-hidden">
-                    <AIFeatureButton onClick={() => handleAiAction(AIFeature.SMART_REPLY)} disabled={isLoadingAi || conversationContext.length === 0}>{AIFeature.SMART_REPLY}</AIFeatureButton>
-                </div>
-              )}
-            </div>
-            <form onSubmit={handleSendMessage} className="flex-1">
-                <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Nachricht schreiben..." className="w-full bg-slate-700 text-slate-200 rounded-full py-2.5 px-5 focus:outline-none focus:ring-2 focus:ring-sky-500" disabled={isLoadingAi} />
-            </form>
-            <button onClick={handleSendMessage} className="bg-sky-600 text-white p-2.5 rounded-full hover:bg-sky-500 disabled:bg-slate-600 disabled:cursor-not-allowed" disabled={!text.trim() || isLoadingAi}><SendIcon className="h-5 w-5" /></button>
-          </div>
-        </div>
-      );
-    };
-
-    // --- FROM components/ContactList.tsx ---
-    const ContactList = ({ contacts, messages, selectedContactId, onSelectContact, currentUser, onDisconnect }) => {
-      const ContactItem = ({ contact, lastMessage, isSelected, onSelect }) => {
-          const selectedClasses = isSelected ? 'bg-slate-700' : 'hover:bg-slate-800';
-          const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '';
-          return (
-            <li onClick={onSelect} className={`flex items-center p-3 cursor-pointer transition-colors ${selectedClasses}`}>
-              <img src={contact.avatarUrl} alt={contact.name} className="h-12 w-12 rounded-full mr-4" />
-              <div className="flex-1 overflow-hidden">
-                <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-100">{contact.name}</h3><span className="text-xs text-slate-400">{lastMessageTime}</span></div>
-                <p className="text-sm text-slate-400 truncate">{lastMessage ? lastMessage.text : 'Keine Nachrichten'}</p>
-              </div>
-            </li>
-          );
-      };
-      return (
-        <aside className="w-full md:w-80 lg:w-96 bg-slate-900 border-r border-slate-800 flex flex-col h-full">
-          <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-            <div className="flex items-center"><img src={currentUser.avatarUrl} alt={currentUser.name} className="h-10 w-10 rounded-full mr-3" /><span className="font-semibold text-white">{currentUser.name}</span></div>
-            <button onClick={onDisconnect} className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md">Trennen</button>
-          </div>
-          <header className="p-4 border-b border-slate-800"><h2 className="text-xl font-bold text-white">Chats</h2></header>
-          <ul className="overflow-y-auto custom-scrollbar flex-1">
-            {contacts.map((contact) => {
-               const chatKey = [currentUser.id, contact.id].sort().join('-');
-               const contactMessages = messages[chatKey] || [];
-               return <ContactItem key={contact.id} contact={contact} lastMessage={contactMessages[contactMessages.length - 1]} isSelected={selectedContactId === contact.id} onSelect={() => onSelectContact(contact.id)} />;
-            })}
-          </ul>
-        </aside>
-      );
-    };
-
-    // --- FROM components/ChatWindow.tsx ---
-    const ChatWindow = ({ contact, messages, onSendMessage, currentUser }) => {
-        const messagesEndRef = React.useRef(null);
-        React.useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-        if (!contact) {
-            return (
-              <main className="flex-1 bg-slate-800/50 hidden md:flex flex-col">
-                <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                    <h2 className="text-xl font-semibold text-slate-300">Willkommen</h2>
-                    <p className="max-w-sm mt-2">Wähle einen Kontakt aus, um eine Unterhaltung zu beginnen.</p>
-                </div>
-              </main>
-            );
-        }
-        
-        return (
-            <main className="flex-1 flex flex-col bg-slate-800/50 h-full">
-                <header className="flex items-center p-4 bg-slate-900 border-b border-slate-800">
-                    <img src={contact.avatarUrl} alt={contact.name} className="h-10 w-10 rounded-full mr-4" />
-                    <div>
-                        <h3 className="text-lg font-semibold text-white">{contact.name}</h3>
-                    </div>
-                </header>
-                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                    <div className="flex flex-col gap-4">
-                        {messages.map((msg) => <MessageBubble key={msg.id} message={msg} currentUserId={currentUser.id} />)}
-                        <div ref={messagesEndRef} />
-                    </div>
-                </div>
-                <MessageInput onSendMessage={onSendMessage} conversationContext={messages} />
-            </main>
-        );
-    };
-    
-    // --- FROM components/ConnectionView.tsx ---
-    const ConnectionView = ({ onConnect, allUsers }) => {
-        const [selectedUser, setSelectedUser] = React.useState(INITIAL_USER);
-        const [urlInput, setUrlInput] = React.useState('wss://');
-        const [isLoading, setIsLoading] = React.useState(false);
-        const [error, setError] = React.useState('');
-
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            setIsLoading(true);
-            setError('');
-            try {
-                await onConnect(selectedUser, urlInput);
-            } catch (err) {
-                setError('Verbindung fehlgeschlagen. Überprüfen Sie die URL und versuchen Sie es erneut.');
-                setIsLoading(false);
-            }
-        }
-
-        return (
-            <div className="w-screen h-screen bg-slate-900 flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-slate-800 text-slate-200 rounded-2xl shadow-xl p-8 border border-slate-700">
-                    <div className="text-center mb-8"><h1 className="text-3xl font-bold text-white">Gemini Messenger</h1><p className="text-slate-400 mt-2">Verbinden</p></div>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="user-select" className="block text-sm font-medium text-slate-300 mb-2">1. Wer sind Sie?</label>
-                            <select id="user-select" value={selectedUser.id} onChange={(e) => setSelectedUser(allUsers.find(u => u.id === e.target.value))} className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500">
-                                {allUsers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <label htmlFor="server-url" className="block text-sm font-medium text-slate-300 mb-2">2. Geben Sie Ihre Server-URL ein</label>
-                            <input 
-                                id="server-url" 
-                                type="text" 
-                                value={urlInput} 
-                                onChange={(e) => setUrlInput(e.target.value)} 
-                                placeholder="wss://your-server.onrender.com" 
-                                className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500" 
-                                required 
-                            />
-                        </div>
-                        {error && <p className="text-sm text-red-400 text-center">{error}</p>}
-                        <div>
-                            <button 
-                                type="submit" 
-                                className="w-full bg-sky-600 text-white font-semibold rounded-lg py-3 hover:bg-sky-500 transition-colors disabled:bg-slate-600 disabled:cursor-wait" 
-                                disabled={isLoading}
-                            >
-                                {isLoading ? 'Verbinde...' : 'Verbinden und Chat starten'}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        );
-    };
-
-    // --- FROM App.tsx ---
-    const App = () => {
-        const [session, setSession] = React.useState({ currentUser: null, serverUrl: null });
-        const [selectedContactId, setSelectedContactId] = React.useState(null);
-        const [messages, setMessages] = React.useState({});
-
-        const handleConnect = async (user, url) => {
-            await socketService.connect(
-                user.id,
-                url,
-                (newMessage) => { // onMessage
-                    setMessages(prev => {
-                        const chatKey = newMessage.chatKey;
-                        const existingMessages = prev[chatKey] || [];
-                        // Prevent duplicate messages if the server echoes back the sender's message
-                        if (existingMessages.some(m => m.id === newMessage.id)) {
-                            return prev;
-                        }
-                        return { ...prev, [chatKey]: [...existingMessages, newMessage] };
-                    });
-                },
-                (initialMessages) => { // onInitialMessages
-                    setMessages(initialMessages);
+          connect(userId, serverUrl, onMessage, onInitialMessages, onStatusUpdate) {
+            return new Promise((resolve, reject) => {
+                if (this.ws) this.disconnect();
+                this.onMessageCallback = onMessage;
+                this.onInitialMessagesCallback = onInitialMessages;
+                this.onStatusUpdateCallback = onStatusUpdate;
+                if (!serverUrl || !serverUrl.startsWith('ws')) {
+                    reject(new Error("Invalid WebSocket URL. It should start with ws:// or wss://"));
+                    return;
                 }
-            );
-            setSession({ currentUser: user, serverUrl: url });
+                this.ws = new WebSocket(`${serverUrl}?userId=${userId}`);
+                this.ws.onopen = () => resolve();
+                this.ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'newMessage' && this.onMessageCallback) this.onMessageCallback(data.payload);
+                    if (data.type === 'initialMessages' && this.onInitialMessagesCallback) this.onInitialMessagesCallback(data.payload);
+                    if (data.type === 'messageStatusUpdate' && this.onStatusUpdateCallback) this.onStatusUpdateCallback(data.payload);
+                };
+                this.ws.onclose = () => this.ws = null;
+                this.ws.onerror = (error) => {
+                    reject(error);
+                    this.ws = null;
+                };
+            });
+          }
+          sendMessage(message, recipientId) {
+            if (this.ws?.readyState === WebSocket.OPEN) {
+              this.ws.send(JSON.stringify({ type: 'sendMessage', payload: { message, recipientId } }));
+            }
+          }
+          disconnect() {
+            this.ws?.close();
+            this.ws = null;
+          }
+        })();
+        
+        // --- FROM components/icons.tsx ---
+        const SendIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>);
+        const SparklesIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>);
+        const CheckIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>);
+        const DoubleCheckIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+        const ClockIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+        const XCircleIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
+
+        // --- FROM components/MessageBubble.tsx ---
+        const MessageBubble = ({ message, currentUserId }) => {
+          const MessageStatusIndicator = ({ status }) => {
+              switch (status) {
+                  case MessageStatus.SENDING: return <ClockIcon className="h-4 w-4 text-slate-400" />;
+                  case MessageStatus.SENT: return <CheckIcon className="h-4 w-4 text-slate-400" />;
+                  case MessageStatus.DELIVERED: return <DoubleCheckIcon className="h-4 w-4 text-slate-400" />;
+                  case MessageStatus.READ: return <DoubleCheckIcon className="h-4 w-4 text-sky-400" />;
+                  case MessageStatus.ERROR: return <XCircleIcon className="h-4 w-4 text-red-500" />;
+                  default: return null;
+              }
+          };
+
+          const isCurrentUser = message.senderId === currentUserId;
+          const bubbleClasses = isCurrentUser ? 'bg-sky-600 text-white self-end rounded-br-none' : 'bg-slate-700 text-slate-200 self-start rounded-bl-none';
+          const time = new Date(message.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+          return (
+            <div className={`flex items-end gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl ${bubbleClasses}`}>
+                <p className="break-words">{message.text}</p>
+                <div className="flex items-center justify-end gap-1 mt-1">
+                  <span className="text-xs opacity-70">{time}</span>
+                  {isCurrentUser && <MessageStatusIndicator status={message.status} />}
+                </div>
+              </div>
+            </div>
+          );
         };
         
-        const handleDisconnect = () => {
-            socketService.disconnect();
-            setSession({ currentUser: null, serverUrl: null });
-            setSelectedContactId(null);
-            setMessages({});
+        // --- FROM components/MessageInput.tsx ---
+        const MessageInput = ({ onSendMessage, conversationContext }) => {
+          const [text, setText] = React.useState('');
+          const [isAiMenuOpen, setIsAiMenuOpen] => React.useState(false);
+          const [isLoadingAi, setIsLoadingAi] = React.useState(false);
+          const [smartReplies, setSmartReplies] = React.useState([]);
+
+          const handleSendMessage = (e) => {
+            e?.preventDefault();
+            if (text.trim()) {
+              onSendMessage(text.trim());
+              setText('');
+              setSmartReplies([]);
+            }
+          };
+
+          const handleAiAction = React.useCallback(async (action) => {
+            setIsLoadingAi(true);
+            setIsAiMenuOpen(false);
+            try {
+                switch(action) {
+                    case AIFeature.SMART_REPLY:
+                        const replies = await geminiService.getSmartReplies(conversationContext);
+                        setSmartReplies(replies);
+                        break;
+                }
+            } finally {
+                setIsLoadingAi(false);
+            }
+          }, [conversationContext, text]);
+          
+          const AIFeatureButton = ({ onClick, children, disabled }) => (<button onClick={onClick} disabled={disabled} className="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-slate-700 disabled:opacity-50 transition-colors">{children}</button>);
+
+          return (
+            <div className="bg-slate-800 p-4 border-t border-slate-700">
+                {smartReplies.length > 0 && (
+                     <div className="flex gap-2 mb-3">{smartReplies.map((reply, i) => (<button key={i} onClick={() => onSendMessage(reply)} className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded-full">{reply}</button>))}</div>
+                )}
+              <div className="relative flex items-center gap-2">
+                <div className="relative">
+                  <button onClick={() => setIsAiMenuOpen(!isAiMenuOpen)} className="p-2 rounded-full hover:bg-slate-700 text-slate-400 hover:text-sky-400"><SparklesIcon className="h-6 w-6" /></button>
+                  {isAiMenuOpen && (
+                    <div className="absolute bottom-full mb-2 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 overflow-hidden">
+                        <AIFeatureButton onClick={() => handleAiAction(AIFeature.SMART_REPLY)} disabled={isLoadingAi || conversationContext.length === 0}>{AIFeature.SMART_REPLY}</AIFeatureButton>
+                    </div>
+                  )}
+                </div>
+                <form onSubmit={handleSendMessage} className="flex-1">
+                    <input type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Nachricht schreiben..." className="w-full bg-slate-700 text-slate-200 rounded-full py-2.5 px-5 focus:outline-none focus:ring-2 focus:ring-sky-500" disabled={isLoadingAi} />
+                </form>
+                <button onClick={handleSendMessage} className="bg-sky-600 text-white p-2.5 rounded-full hover:bg-sky-500 disabled:bg-slate-600 disabled:cursor-not-allowed" disabled={!text.trim() || isLoadingAi}><SendIcon className="h-5 w-5" /></button>
+              </div>
+            </div>
+          );
         };
 
-        const handleSelectContact = (contactId) => {
-            setSelectedContactId(contactId);
+        // --- FROM components/ContactList.tsx ---
+        const ContactList = ({ contacts, messages, selectedContactId, onSelectContact, currentUser, onDisconnect }) => {
+          const ContactItem = ({ contact, lastMessage, isSelected, onSelect }) => {
+              const selectedClasses = isSelected ? 'bg-slate-700' : 'hover:bg-slate-800';
+              const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '';
+              return (
+                <li onClick={onSelect} className={`flex items-center p-3 cursor-pointer transition-colors ${selectedClasses}`}>
+                  <img src={contact.avatarUrl} alt={contact.name} className="h-12 w-12 rounded-full mr-4" />
+                  <div className="flex-1 overflow-hidden">
+                    <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-100">{contact.name}</h3><span className="text-xs text-slate-400">{lastMessageTime}</span></div>
+                    <p className="text-sm text-slate-400 truncate">{lastMessage ? lastMessage.text : 'Keine Nachrichten'}</p>
+                  </div>
+                </li>
+              );
+          };
+          return (
+            <aside className="w-full md:w-80 lg:w-96 bg-slate-900 border-r border-slate-800 flex flex-col h-full">
+              <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div className="flex items-center"><img src={currentUser.avatarUrl} alt={currentUser.name} className="h-10 w-10 rounded-full mr-3" /><span className="font-semibold text-white">{currentUser.name}</span></div>
+                <button onClick={onDisconnect} className="px-3 py-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-md">Trennen</button>
+              </div>
+              <header className="p-4 border-b border-slate-800"><h2 className="text-xl font-bold text-white">Chats</h2></header>
+              <ul className="overflow-y-auto custom-scrollbar flex-1">
+                {contacts.map((contact) => {
+                   const chatKey = [currentUser.id, contact.id].sort().join('-');
+                   const contactMessages = messages[chatKey] || [];
+                   return <ContactItem key={contact.id} contact={contact} lastMessage={contactMessages[contactMessages.length - 1]} isSelected={selectedContactId === contact.id} onSelect={() => onSelectContact(contact.id)} />;
+                })}
+              </ul>
+            </aside>
+          );
         };
 
-        const handleSendMessage = (text) => {
-            const { currentUser } = session;
-            if (!currentUser || !selectedContactId) return;
+        // --- FROM components/ChatWindow.tsx ---
+        const ChatWindow = ({ contact, messages, onSendMessage, currentUser }) => {
+            const messagesEndRef = React.useRef(null);
+            React.useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-            const contact = ALL_USERS.find(u => u.id === selectedContactId);
-            const chatKey = [currentUser.id, contact.id].sort().join('-');
+            if (!contact) {
+                return (
+                  <main className="flex-1 bg-slate-800/50 hidden md:flex flex-col">
+                    <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                        <h2 className="text-xl font-semibold text-slate-300">Willkommen</h2>
+                        <p className="max-w-sm mt-2">Wähle einen Kontakt aus, um eine Unterhaltung zu beginnen.</p>
+                    </div>
+                  </main>
+                );
+            }
             
-            const newMessage = {
-                id: crypto.randomUUID(),
-                chatKey: chatKey,
-                senderId: currentUser.id,
-                recipientId: selectedContactId,
-                text: text,
-                timestamp: Date.now(),
-                status: MessageStatus.SENDING,
+            return (
+                <main className="flex-1 flex flex-col bg-slate-800/50 h-full">
+                    <header className="flex items-center p-4 bg-slate-900 border-b border-slate-800">
+                        <img src={contact.avatarUrl} alt={contact.name} className="h-10 w-10 rounded-full mr-4" />
+                        <div>
+                            <h3 className="text-lg font-semibold text-white">{contact.name}</h3>
+                        </div>
+                    </header>
+                    <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                        <div className="flex flex-col gap-4">
+                            {messages.map((msg) => <MessageBubble key={msg.id} message={msg} currentUserId={currentUser.id} />)}
+                            <div ref={messagesEndRef} />
+                        </div>
+                    </div>
+                    <MessageInput onSendMessage={onSendMessage} conversationContext={messages} />
+                </main>
+            );
+        };
+        
+        // --- FROM components/ConnectionView.tsx ---
+        const ConnectionView = ({ onConnect, allUsers }) => {
+            const [selectedUser, setSelectedUser] = React.useState(INITIAL_USER);
+            const [urlInput, setUrlInput] = React.useState('wss://');
+            const [isLoading, setIsLoading] = React.useState(false);
+            const [error, setError] = React.useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setError('');
+                try {
+                    await onConnect(selectedUser, urlInput);
+                } catch (err) {
+                    setError('Verbindung fehlgeschlagen. Überprüfen Sie die URL und versuchen Sie es erneut.');
+                    setIsLoading(false);
+                }
+            }
+
+            return (
+                <div className="w-screen h-screen bg-slate-900 flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-slate-800 text-slate-200 rounded-2xl shadow-xl p-8 border border-slate-700">
+                        <div className="text-center mb-8"><h1 className="text-3xl font-bold text-white">Gemini Messenger</h1><p className="text-slate-400 mt-2">Verbinden</p></div>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div>
+                                <label htmlFor="user-select" className="block text-sm font-medium text-slate-300 mb-2">1. Wer sind Sie?</label>
+                                <select id="user-select" value={selectedUser.id} onChange={(e) => setSelectedUser(allUsers.find(u => u.id === e.target.value))} className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                    {allUsers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="server-url" className="block text-sm font-medium text-slate-300 mb-2">2. Geben Sie Ihre Server-URL ein</label>
+                                <input 
+                                    id="server-url" 
+                                    type="text" 
+                                    value={urlInput} 
+                                    onChange={(e) => setUrlInput(e.target.value)} 
+                                    placeholder="wss://your-server.onrender.com" 
+                                    className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500" 
+                                    required 
+                                />
+                            </div>
+                            {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+                            <div>
+                                <button 
+                                    type="submit" 
+                                    className="w-full bg-sky-600 text-white font-semibold rounded-lg py-3 hover:bg-sky-500 transition-colors disabled:bg-slate-600 disabled:cursor-wait" 
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? 'Verbinde...' : 'Verbinden und Chat starten'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- FROM App.tsx ---
+        const App = () => {
+            const [session, setSession] = React.useState({ currentUser: null, serverUrl: null });
+            const [selectedContactId, setSelectedContactId] = React.useState(null);
+            const [messages, setMessages] = React.useState({});
+
+            const handleMessageStatusUpdate = (update) => {
+                const { messageId, newStatus, chatKey } = update;
+                setMessages(prev => {
+                    const chatMessages = prev[chatKey] || [];
+                    const updatedMessages = chatMessages.map(msg => 
+                        msg.id === messageId ? { ...msg, status: newStatus } : msg
+                    );
+                    return { ...prev, [chatKey]: updatedMessages };
+                });
             };
 
-            setMessages(prev => ({
-                ...prev,
-                [chatKey]: [...(prev[chatKey] || []), newMessage]
-            }));
+            const handleConnect = async (user, url) => {
+                await socketService.connect(
+                    user.id,
+                    url,
+                    (newMessage) => { // onMessage
+                        setMessages(prev => {
+                            const chatKey = newMessage.chatKey;
+                            const existingMessages = prev[chatKey] || [];
+                            if (existingMessages.some(m => m.id === newMessage.id)) {
+                                return prev;
+                            }
+                            return { ...prev, [chatKey]: [...existingMessages, newMessage] };
+                        });
+                    },
+                    (initialMessages) => { // onInitialMessages
+                        setMessages(initialMessages);
+                    },
+                    handleMessageStatusUpdate // onStatusUpdate
+                );
+                setSession({ currentUser: user, serverUrl: url });
+            };
+            
+            const handleDisconnect = () => {
+                socketService.disconnect();
+                setSession({ currentUser: null, serverUrl: null });
+                setSelectedContactId(null);
+                setMessages({});
+            };
 
-            socketService.sendMessage(newMessage, selectedContactId);
+            const handleSelectContact = (contactId) => {
+                setSelectedContactId(contactId);
+            };
+
+            const handleSendMessage = (text) => {
+                const { currentUser } = session;
+                if (!currentUser || !selectedContactId) return;
+
+                const contact = ALL_USERS.find(u => u.id === selectedContactId);
+                const chatKey = [currentUser.id, contact.id].sort().join('-');
+                
+                const newMessage = {
+                    id: crypto.randomUUID(),
+                    chatKey: chatKey,
+                    senderId: currentUser.id,
+                    recipientId: selectedContactId,
+                    text: text,
+                    timestamp: Date.now(),
+                    status: MessageStatus.SENDING,
+                };
+
+                setMessages(prev => ({
+                    ...prev,
+                    [chatKey]: [...(prev[chatKey] || []), newMessage]
+                }));
+
+                socketService.sendMessage(newMessage, selectedContactId);
+            };
+            
+            if (!session.currentUser) {
+                return <ConnectionView onConnect={handleConnect} allUsers={ALL_USERS} />;
+            }
+            
+            const { currentUser } = session;
+            const contacts = ALL_USERS.filter(u => u.id !== currentUser.id);
+            const selectedContact = contacts.find(c => c.id === selectedContactId);
+            const chatKey = selectedContact ? [currentUser.id, selectedContact.id].sort().join('-') : null;
+            const currentMessages = chatKey ? messages[chatKey] || [] : [];
+            
+            return (
+                <div className="h-screen w-screen bg-slate-800 text-slate-200 flex overflow-hidden">
+                    <ContactList
+                        contacts={contacts}
+                        messages={messages}
+                        selectedContactId={selectedContactId}
+                        onSelectContact={handleSelectContact}
+                        currentUser={currentUser}
+                        onDisconnect={handleDisconnect}
+                    />
+                    <ChatWindow
+                        contact={selectedContact}
+                        messages={currentMessages}
+                        onSendMessage={handleSendMessage}
+                        currentUser={currentUser}
+                    />
+                </div>
+            );
         };
-        
-        if (!session.currentUser) {
-            return <ConnectionView onConnect={handleConnect} allUsers={ALL_USERS} />;
-        }
-        
-        const { currentUser } = session;
-        const contacts = ALL_USERS.filter(u => u.id !== currentUser.id);
-        const selectedContact = contacts.find(c => c.id === selectedContactId);
-        const chatKey = selectedContact ? [currentUser.id, selectedContact.id].sort().join('-') : null;
-        const currentMessages = chatKey ? messages[chatKey] || [] : [];
-        
-        return (
-            <div className="h-screen w-screen bg-slate-800 text-slate-200 flex overflow-hidden">
-                <ContactList
-                    contacts={contacts}
-                    messages={messages}
-                    selectedContactId={selectedContactId}
-                    onSelectContact={handleSelectContact}
-                    currentUser={currentUser}
-                    onDisconnect={handleDisconnect}
-                />
-                <ChatWindow
-                    contact={selectedContact}
-                    messages={currentMessages}
-                    onSendMessage={handleSendMessage}
-                    currentUser={currentUser}
-                />
-            </div>
-        );
-    };
 
-    // --- RENDER THE APP ---
-    const container = document.getElementById('root');
-    const root = ReactDOM.createRoot(container);
-    root.render(<App />);
+        // --- RENDER THE APP ---
+    }
+
+    // Wait for the genai library to be loaded before starting the app
+    if (window.genaiLoaded) {
+      initializeAndRunApp();
+    } else {
+      document.body.addEventListener('genai-loaded', initializeAndRunApp, { once: true });
+    }
   </script>
 </body>
 </html>

@@ -69,25 +69,36 @@ wss.on('connection', (ws, req) => {
         }
         // Avoid storing duplicates if history is already synced
         if (!messageHistory[chatKey].some(m => m.id === msg.id)) {
-            messageHistory[chatKey].push(msg);
+            messageHistory[chatKey].push({ ...msg, status: 'sent' }); // Store with final status
         }
         
         // Get sockets for both participants
         const recipientSocket = clients.get(recipientId);
         const senderSocket = clients.get(senderId);
 
+        const updatedMessage = { ...msg, status: 'sent' };
+
         // Send the message to the recipient if they are online
         if (recipientSocket && recipientSocket.readyState === recipientSocket.OPEN) {
-          recipientSocket.send(JSON.stringify({ type: 'newMessage', payload: msg }));
+          recipientSocket.send(JSON.stringify({ type: 'newMessage', payload: updatedMessage }));
           console.log(`Message sent from ${senderId} to ${recipientId}`);
         } else {
             console.log(`Recipient ${recipientId} is not online. Message stored.`);
         }
 
-        // Send the message back to the sender for synchronization
+        // Send the message back to the sender for synchronization (so they also get the 'sent' status)
         if (senderSocket && senderSocket.readyState === senderSocket.OPEN) {
-          senderSocket.send(JSON.stringify({ type: 'newMessage', payload: msg }));
-           console.log(`Message echoed back to sender ${senderId}`);
+          // Instead of sending the full message again, we send a status update
+          // This assumes the client optimistically added the message already.
+          senderSocket.send(JSON.stringify({ 
+            type: 'messageStatusUpdate', 
+            payload: {
+              messageId: msg.id,
+              chatKey: chatKey,
+              newStatus: 'sent'
+            }
+          }));
+           console.log(`Status update 'sent' sent for message ${msg.id} to ${senderId}`);
         }
       }
     } catch (e) {
