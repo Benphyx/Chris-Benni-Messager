@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-T-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gemini Secure Messenger</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -41,8 +41,6 @@
     };
     const AIFeature = {
       SMART_REPLY: 'Smarte Antworten',
-      REWRITE_FORMAL: 'Formeller umschreiben',
-      REWRITE_CASUAL: 'Legerer umschreiben',
     };
 
     // --- FROM services/cryptoService.ts ---
@@ -64,7 +62,7 @@
         return bytes.buffer;
     }
     async function importPrivateKey(jwk) {
-        return await crypto.subtle.importKey('jwk', jk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+        return await crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
     }
     async function importPublicKey(jwk) {
         return await crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
@@ -93,12 +91,10 @@
     
     // --- FROM constants.ts ---
     // NOTE: Using placeholder keys. In a real app, these would be generated and stored securely.
-    const user0_c = { id: 'user-0', name: 'Ich', avatarUrl: 'https://i.pravatar.cc/100?u=user-0', privateKey: {"kty":"EC","crv":"P-256","x":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b","d":"_8c_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-c"}, publicKey: {"kty":"EC","crv":"P-256","x":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b"} };
-    const user1_c = { id: 'user-1', name: 'Lena Müller', avatarUrl: 'https://i.pravatar.cc/100?u=user-1', privateKey: {"kty":"EC","crv":"P-256","x":"a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f","d":"c_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_g"}, publicKey: {"kty":"EC","crv":"P-256","x":"a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f"} };
-    const user2_c = { id: 'user-2', name: 'Max Schmidt', avatarUrl: 'https://i.pravatar.cc/100?u=user-2', privateKey: {"kty":"EC","crv":"P-256","x":"d_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_h","y":"e_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_i","d":"f_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_j"}, publicKey: {"kty":"EC","crv":"P-256","x":"d_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_h","y":"e_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_i"} };
-    const user3_c = { id: 'user-3', name: 'Sophia Wagner', avatarUrl: 'https://i.pravatar.cc/100?u=user-3', privateKey: {"kty":"EC","crv":"P-256","x":"g_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_k","y":"h_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_l","d":"i_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_m"}, publicKey: {"kty":"EC","crv":"P-256","x":"g_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_k","y":"h_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_l"} };
-    const ALL_USERS = [user0_c, user1_c, user2_c, user3_c];
-    const INITIAL_USER = user0_c;
+    const chris_c = { id: 'user-chris', name: 'Chris', avatarUrl: 'https://i.pravatar.cc/100?u=chris', privateKey: {"kty":"EC","crv":"P-256","x":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b","d":"_CH_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-c"}, publicKey: {"kty":"EC","crv":"P-256","x":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_CH-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b"} };
+    const benni_c = { id: 'user-benni', name: 'Benni', avatarUrl: 'https://i.pravatar.cc/100?u=benni', privateKey: {"kty":"EC","crv":"P-256","x":"a_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f","d":"c_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_g"}, publicKey: {"kty":"EC","crv":"P-256","x":"a_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_BE_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f"} };
+    const ALL_USERS = [chris_c, benni_c];
+    const INITIAL_USER = chris_c;
 
     // --- FROM services/geminiService.ts ---
     const geminiService = (() => {
@@ -106,8 +102,6 @@
       function getAiInstance() {
           if (ai_instance) return ai_instance;
           try {
-              // In a real app, the API key should be handled more securely.
-              // For this demo, it relies on an environment variable that might be present in AI Studio.
               if (window.GoogleGenAI && window.process && window.process.env && window.process.env.API_KEY) {
                   ai_instance = new window.GoogleGenAI({ apiKey: window.process.env.API_KEY });
                   return ai_instance;
@@ -135,18 +129,6 @@
               } catch (error) {
                   console.error("Error getting smart replies:", error);
                   return [];
-              }
-          },
-          async rewriteMessage(message, tone) {
-              const ai = getAiInstance();
-              if (!ai) return "AI-Funktion ist nicht verfügbar.";
-              try {
-                  const prompt = `Schreibe die folgende Nachricht ${tone} um. Gib nur den umgeschriebenen Text zurück, ohne zusätzliche Erklärung oder Anführungszeichen:\n\n"${message}"`;
-                  const response = await ai.models.generateContent({ model: 'gemini-2.5-pro', contents: prompt });
-                  return response.text.trim();
-              } catch (error) {
-                  console.error("Error rewriting message:", error);
-                  return "Fehler beim Umschreiben der Nachricht.";
               }
           }
       };
@@ -284,12 +266,6 @@
                     const replies = await geminiService.getSmartReplies(decryptedContext);
                     setSmartReplies(replies);
                     break;
-                case AIFeature.REWRITE_FORMAL:
-                    if(text) setText(await geminiService.rewriteMessage(text, 'formeller'));
-                    break;
-                case AIFeature.REWRITE_CASUAL:
-                    if(text) setText(await geminiService.rewriteMessage(text, 'legerer'));
-                    break;
             }
         } finally {
             setIsLoadingAi(false);
@@ -309,8 +285,6 @@
               {isAiMenuOpen && (
                 <div className="absolute bottom-full mb-2 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 overflow-hidden">
                     <AIFeatureButton onClick={() => handleAiAction(AIFeature.SMART_REPLY)} disabled={isLoadingAi || conversationContext.length === 0}>{AIFeature.SMART_REPLY}</AIFeatureButton>
-                    <AIFeatureButton onClick={() => handleAiAction(AIFeature.REWRITE_FORMAL)} disabled={isLoadingAi || !text}>{AIFeature.REWRITE_FORMAL}</AIFeatureButton>
-                    <AIFeatureButton onClick={() => handleAiAction(AIFeature.REWRITE_CASUAL)} disabled={isLoadingAi || !text}>{AIFeature.REWRITE_CASUAL}</AIFeatureButton>
                 </div>
               )}
             </div>
