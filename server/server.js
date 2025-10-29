@@ -6,19 +6,25 @@
 // 3. Run `node server/server.js`.
 
 const { WebSocketServer } = require('ws');
+const http = require('http');
 const url = require('url');
 
 // Use the PORT environment variable provided by Render, with a fallback for local development.
 const PORT = process.env.PORT || 8080;
 
-const wss = new WebSocketServer({ port: PORT });
+// Create a simple HTTP server to handle health checks from Render.
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('OK');
+});
+
+// Attach the WebSocket server to the HTTP server.
+const wss = new WebSocketServer({ server });
 
 // In a real application, you would use a proper database (e.g., PostgreSQL, Redis).
 // For this example, we'll store messages in memory.
 const messageHistory = {}; 
 const clients = new Map(); // Map<userId, WebSocket>
-
-console.log(`WebSocket server started on port ${PORT}`);
 
 wss.on('connection', (ws, req) => {
   // Extract userId from the connection URL, e.g., ws://localhost:8080?userId=user-1
@@ -70,6 +76,12 @@ wss.on('connection', (ws, req) => {
         } else {
             console.log(`Recipient ${recipientId} is not online. Message stored.`);
         }
+
+        // Also send the message back to the sender to confirm it was processed
+        const senderSocket = clients.get(msg.senderId);
+        if(senderSocket && senderSocket.readyState === senderSocket.OPEN) {
+            // (Optional) You could add a confirmation message type here
+        }
       }
     } catch (e) {
       console.error('Failed to process message:', e);
@@ -90,4 +102,9 @@ wss.on('connection', (ws, req) => {
   ws.on('error', (error) => {
     console.error('WebSocket error:', error);
   });
+});
+
+// Start the HTTP server, which in turn starts the WebSocket server.
+server.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}`);
 });

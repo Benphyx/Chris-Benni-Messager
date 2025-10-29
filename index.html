@@ -15,25 +15,19 @@
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@18.2.0/client.js",
-    "react-dom": "https://aistudiocdn.com/react-dom@18.2.0",
-    "react": "https://aistudiocdn.com/react@18.2.0"
-  }
-}
+<!-- Load React and ReactDOM as global variables -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<!-- Load GoogleGenAI and attach it to the window object -->
+<script type="module">
+  import { GoogleGenAI } from "https://aistudiocdn.com/@google/genai@^1.27.0";
+  window.GoogleGenAI = GoogleGenAI;
 </script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
 <body>
   <div id="root"></div>
   <script type="text/babel" data-presets="react,typescript">
-    import React, { useState, useEffect, useRef, useCallback } from 'react';
-    import ReactDOM from 'react-dom/client';
-    import { GoogleGenAI } from '@google/genai';
-
     // --- CONSOLIDATED APPLICATION CODE ---
     // All .ts and .tsx files have been inlined here to create a single, deployable file.
     
@@ -70,7 +64,7 @@
         return bytes.buffer;
     }
     async function importPrivateKey(jwk) {
-        return await crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+        return await crypto.subtle.importKey('jwk', jk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
     }
     async function importPublicKey(jwk) {
         return await crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
@@ -98,10 +92,11 @@
     }
     
     // --- FROM constants.ts ---
-    const user0_c = { id: 'user-0', name: 'Ich', avatarUrl: 'https://picsum.photos/seed/me/100/100', publicKey: {"crv":"P-256","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"f63EyC6a345-C00e-TAt_K-aF0-c0yX_Dcew7-2v8Is","y":"d5X9gO6c1qj2a_gI_e8o5A-f8b8C8F8c8c8c8c8c8c8"}, privateKey: {"crv":"P-256","d":"8a8J-l-s8-Q9f8c8c8c8c8c8c8c8c8c8c8c8c8c8c8","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"f63EyC6a345-C00e-TAt_K-aF0-c0yX_Dcew7-2v8Is","y":"d5X9gO6c1qj2a_gI_e8o5A-f8b8C8F8c8c8c8c8c8c8"} };
-    const user1_c = { id: 'user-1', name: 'Lena Müller', avatarUrl: 'https://picsum.photos/seed/lena/100/100', publicKey: {"crv":"P-256","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b"}, privateKey: {"crv":"P-256","d":"_8c_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-c","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b"} };
-    const user2_c = { id: 'user-2', name: 'Max Schmidt', avatarUrl: 'https://picsum.photos/seed/max/100/100', publicKey: {"crv":"P-256","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f"}, privateKey: {"crv":"P-256","d":"c_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_g","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f"} };
-    const user3_c = { id: 'user-3', name: 'Sophia Wagner', avatarUrl: 'https://picsum.photos/seed/sophia/100/100', publicKey: {"crv":"P-256","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"d_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_h","y":"e_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_i"}, privateKey: {"crv":"P-256","d":"f_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_j","ext":true,"key_ops":["deriveKey"],"kty":"EC","x":"d_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_h","y":"e_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_i"} };
+    // NOTE: Using placeholder keys. In a real app, these would be generated and stored securely.
+    const user0_c = { id: 'user-0', name: 'Ich', avatarUrl: 'https://i.pravatar.cc/100?u=user-0', privateKey: {"kty":"EC","crv":"P-256","x":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b","d":"_8c_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-c"}, publicKey: {"kty":"EC","crv":"P-256","x":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a","y":"_4Y-e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-b"} };
+    const user1_c = { id: 'user-1', name: 'Lena Müller', avatarUrl: 'https://i.pravatar.cc/100?u=user-1', privateKey: {"kty":"EC","crv":"P-256","x":"a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f","d":"c_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_g"}, publicKey: {"kty":"EC","crv":"P-256","x":"a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e","y":"b_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_f"} };
+    const user2_c = { id: 'user-2', name: 'Max Schmidt', avatarUrl: 'https://i.pravatar.cc/100?u=user-2', privateKey: {"kty":"EC","crv":"P-256","x":"d_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_h","y":"e_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_i","d":"f_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_j"}, publicKey: {"kty":"EC","crv":"P-256","x":"d_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_h","y":"e_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_i"} };
+    const user3_c = { id: 'user-3', name: 'Sophia Wagner', avatarUrl: 'https://i.pravatar.cc/100?u=user-3', privateKey: {"kty":"EC","crv":"P-256","x":"g_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_k","y":"h_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_l","d":"i_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_m"}, publicKey: {"kty":"EC","crv":"P-256","x":"g_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_k","y":"h_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_e_X-a_Z_e_V_l"} };
     const ALL_USERS = [user0_c, user1_c, user2_c, user3_c];
     const INITIAL_USER = user0_c;
 
@@ -111,14 +106,18 @@
       function getAiInstance() {
           if (ai_instance) return ai_instance;
           try {
-              if (process && process.env && process.env.API_KEY) {
-                  ai_instance = new GoogleGenAI({ apiKey: process.env.API_KEY });
+              // In a real app, the API key should be handled more securely.
+              // For this demo, it relies on an environment variable that might be present in AI Studio.
+              if (window.GoogleGenAI && window.process && window.process.env && window.process.env.API_KEY) {
+                  ai_instance = new window.GoogleGenAI({ apiKey: window.process.env.API_KEY });
                   return ai_instance;
               }
-          } catch (e) {
-              // process is not defined
+          } catch (e) { /* process is not defined in browser */ }
+           if (window.GoogleGenAI) {
+              console.warn("API_KEY not found. Gemini AI features will be disabled. This is expected if not in an environment like AI Studio.");
+              return null;
           }
-          console.warn("API_KEY not found. Gemini AI features will be disabled. This is expected if not in an environment like AI Studio.");
+          console.warn("GoogleGenAI library not loaded. AI features disabled.");
           return null;
       }
 
@@ -130,7 +129,7 @@
                   const lastMessage = conversationHistory.length > 0 ? conversationHistory[conversationHistory.length - 1].text : '';
                   const prompt = `Basierend auf der letzten Nachricht "${lastMessage}", generiere 3 kurze, prägnante Antwortvorschläge auf Deutsch. Gib nur ein JSON-Array von Strings zurück, sonst nichts. Beispiel: ["Ja, gerne!", "Vielleicht später.", "Ich bin mir nicht sicher."]\n`;
                   const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: prompt });
-                  const jsonString = response.text.trim().replace(/\\\`\\\`\\\`json|\\\`\\\`\\\`/g, '');
+                  const jsonString = response.text.trim().replace(/^```json\n?|```$/g, '');
                   const replies = JSON.parse(jsonString);
                   return Array.isArray(replies) ? replies.slice(0, 3) : [];
               } catch (error) {
@@ -204,10 +203,10 @@
 
     // --- FROM components/MessageBubble.tsx ---
     const MessageBubble = ({ message, currentUserId, sharedKey }) => {
-      const [decryptedText, setDecryptedText] = useState('');
-      const [isDecrypting, setIsDecrypting] = useState(true);
+      const [decryptedText, setDecryptedText] = React.useState('');
+      const [isDecrypting, setIsDecrypting] = React.useState(true);
 
-      useEffect(() => {
+      React.useEffect(() => {
         const decrypt = async () => {
           if (sharedKey && message.text) {
             setIsDecrypting(true);
@@ -215,12 +214,16 @@
               const text = await decryptMessage(message.text, sharedKey);
               setDecryptedText(text);
             } catch (error) {
-              setDecryptedText("Fehler beim Entschlüsseln...");
+              console.error("Decryption failed:", error);
+              setDecryptedText("🔒 Fehler beim Entschlüsseln");
             } finally {
               setIsDecrypting(false);
             }
           } else if (!message.text) {
               setDecryptedText("");
+              setIsDecrypting(false);
+          } else {
+              setDecryptedText("🔒 Schlüssel fehlt");
               setIsDecrypting(false);
           }
         };
@@ -257,10 +260,10 @@
     
     // --- FROM components/MessageInput.tsx ---
     const MessageInput = ({ onSendMessage, conversationContext }) => {
-      const [text, setText] = useState('');
-      const [isAiMenuOpen, setIsAiMenuOpen] = useState(false);
-      const [isLoadingAi, setIsLoadingAi] = useState(false);
-      const [smartReplies, setSmartReplies] = useState([]);
+      const [text, setText] = React.useState('');
+      const [isAiMenuOpen, setIsAiMenuOpen] = React.useState(false);
+      const [isLoadingAi, setIsLoadingAi] = React.useState(false);
+      const [smartReplies, setSmartReplies] = React.useState([]);
 
       const handleSendMessage = (e) => {
         e?.preventDefault();
@@ -271,15 +274,13 @@
         }
       };
 
-      const handleAiAction = useCallback(async (action) => {
+      const handleAiAction = React.useCallback(async (action) => {
         setIsLoadingAi(true);
         setIsAiMenuOpen(false);
         try {
             switch(action) {
                 case AIFeature.SMART_REPLY:
-                    const decryptedContext = await Promise.all(
-                        conversationContext.map(m => ({ ...m, text: `Sprecher ${m.senderId}: ${m.decryptedText}` })) // Assuming text is decrypted already
-                    );
+                    const decryptedContext = conversationContext.map(m => `Sprecher ${m.senderId}: ${m.decryptedText || ''}`);
                     const replies = await geminiService.getSmartReplies(decryptedContext);
                     setSmartReplies(replies);
                     break;
@@ -332,7 +333,7 @@
               <img src={contact.avatarUrl} alt={contact.name} className="h-12 w-12 rounded-full mr-4" />
               <div className="flex-1 overflow-hidden">
                 <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-100">{contact.name}</h3><span className="text-xs text-slate-400">{lastMessageTime}</span></div>
-                <p className="text-sm text-slate-400 truncate italic">{lastMessage ? '... ' : 'Keine Nachrichten'}</p>
+                <p className="text-sm text-slate-400 truncate italic">{lastMessage ? 'Verschlüsselte Nachricht...' : 'Keine Nachrichten'}</p>
               </div>
             </li>
           );
@@ -357,8 +358,8 @@
 
     // --- FROM components/ChatWindow.tsx ---
     const ChatWindow = ({ contact, messages, onSendMessage, currentUser, sharedKey }) => {
-        const messagesEndRef = useRef(null);
-        useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+        const messagesEndRef = React.useRef(null);
+        React.useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
         if (!contact) {
             return (
@@ -394,14 +395,21 @@
     
     // --- FROM components/ConnectionView.tsx ---
     const ConnectionView = ({ onConnect, allUsers }) => {
-        const [selectedUser, setSelectedUser] = useState(INITIAL_USER);
-        const [urlInput, setUrlInput] = useState('ws://localhost:8080');
-        const [isLoading, setIsLoading] = useState(false);
+        const [selectedUser, setSelectedUser] = React.useState(INITIAL_USER);
+        const [urlInput, setUrlInput] = React.useState('wss://');
+        const [isLoading, setIsLoading] = React.useState(false);
+        const [error, setError] = React.useState('');
 
-        const handleSubmit = (e) => {
+        const handleSubmit = async (e) => {
             e.preventDefault();
             setIsLoading(true);
-            setTimeout(() => onConnect(selectedUser, urlInput), 250);
+            setError('');
+            try {
+                await onConnect(selectedUser, urlInput);
+            } catch (err) {
+                setError('Verbindung fehlgeschlagen. Überprüfen Sie die URL und versuchen Sie es erneut.');
+                setIsLoading(false);
+            }
         }
 
         return (
@@ -417,106 +425,143 @@
                         </div>
                         <div>
                             <label htmlFor="server-url" className="block text-sm font-medium text-slate-300 mb-2">2. Geben Sie Ihre Server-URL ein</label>
-                            <input id="server-url" type="text" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="z.B. wss://mein-server.onrender.com" className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500" />
-                            <p className="text-xs text-slate-500 mt-2">Dies ist die Adresse Ihres gehosteten Backends.</p>
+                            <input 
+                                id="server-url" 
+                                type="text" 
+                                value={urlInput} 
+                                onChange={(e) => setUrlInput(e.target.value)} 
+                                placeholder="wss://your-server.onrender.com" 
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-sky-500" 
+                                required 
+                            />
                         </div>
-                        <button type="submit" disabled={isLoading} className="w-full bg-sky-600 text-white font-semibold py-3 rounded-lg hover:bg-sky-500 transition-colors disabled:bg-slate-600 flex items-center justify-center">{isLoading ? 'Verbinde...' : 'Verbinden und Chat starten'}</button>
+                        {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+                        <div>
+                            <button 
+                                type="submit" 
+                                className="w-full bg-sky-600 text-white font-semibold rounded-lg py-3 hover:bg-sky-500 transition-colors disabled:bg-slate-600 disabled:cursor-wait" 
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Verbinde...' : 'Verbinden und Chat starten'}
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
         );
-    }
-    
+    };
+
     // --- FROM App.tsx ---
-    function App() {
-      const [session, setSession] = useState(null);
-      const [messages, setMessages] = useState({});
-      const [sharedKeys, setSharedKeys] = useState({});
-      const firstContact = ALL_USERS.find(u => u.id !== INITIAL_USER.id);
-      const [selectedContactId, setSelectedContactId] = useState(firstContact?.id || null);
-      
-      const getChatKey = (id1, id2) => [id1, id2].sort().join('-');
+    const App = () => {
+        const [session, setSession] = React.useState({ currentUser: null, serverUrl: null });
+        const [selectedContactId, setSelectedContactId] = React.useState(null);
+        const [messages, setMessages] = React.useState({});
+        const [sharedKeys, setSharedKeys] = React.useState({});
 
-      useEffect(() => {
-        if (!session) { socketService.disconnect(); return; }
-        
-        const handleNewMessage = (message) => {
-          const otherUserId = message.senderId === session.user.id ? message.chatKey.replace(session.user.id, '').replace('-', '') : message.senderId;
-          const chatKey = getChatKey(session.user.id, otherUserId);
-          setMessages(prev => ({ ...prev, [chatKey]: [...(prev[chatKey] || []), message] }));
+        const handleConnect = async (user, url) => {
+            await socketService.connect(
+                user.id,
+                url,
+                (newMessage) => { // onMessage
+                    setMessages(prev => ({
+                        ...prev,
+                        [newMessage.chatKey]: [...(prev[newMessage.chatKey] || []), newMessage]
+                    }));
+                },
+                (initialMessages) => { // onInitialMessages
+                    setMessages(initialMessages);
+                }
+            );
+            setSession({ currentUser: user, serverUrl: url });
         };
-        const handleInitialMessages = (initialMessages) => setMessages(initialMessages);
         
-        socketService.connect(session.user.id, session.serverUrl, handleNewMessage, handleInitialMessages)
-          .catch(err => {
-            alert(`Verbindung zum Server fehlgeschlagen: ${err.message || 'URL prüfen.'}`);
-            handleDisconnect();
-          });
-          
-        return () => socketService.disconnect();
-      }, [session]);
+        const handleDisconnect = () => {
+            socketService.disconnect();
+            setSession({ currentUser: null, serverUrl: null });
+            setSelectedContactId(null);
+            setMessages({});
+            setSharedKeys({});
+        };
 
-      useEffect(() => {
-        if (!session) return;
-        const establishKeys = async () => {
-          const newKeys = {};
-          for (const user of ALL_USERS) {
-            if (user.id !== session.user.id) {
-              const key = await deriveSharedKey(session.user.privateKey, user.publicKey);
-              newKeys[getChatKey(session.user.id, user.id)] = key;
+        const handleSelectContact = async (contactId) => {
+            setSelectedContactId(contactId);
+            const contact = ALL_USERS.find(u => u.id === contactId);
+            if (!contact || !session.currentUser) return;
+            const keyId = [session.currentUser.id, contact.id].sort().join('-');
+            if (!sharedKeys[keyId]) {
+                const key = await deriveSharedKey(session.currentUser.privateKey, contact.publicKey);
+                setSharedKeys(prev => ({ ...prev, [keyId]: key }));
             }
-          }
-          setSharedKeys(newKeys);
         };
-        establishKeys();
-      }, [session]);
 
-      const handleDisconnect = () => {
-        setSession(null);
-        setMessages({});
-        setSharedKeys({});
-        setSelectedContactId(firstContact?.id || null);
-      };
+        const handleSendMessage = async (text) => {
+            const { currentUser } = session;
+            if (!currentUser || !selectedContactId) return;
 
-      const handleSendMessage = async (text) => {
-        if (!selectedContactId || !session) return;
-        const chatKey = getChatKey(session.user.id, selectedContactId);
-        const sharedKey = sharedKeys[chatKey];
-        if (!sharedKey) return;
+            const contact = ALL_USERS.find(u => u.id === selectedContactId);
+            const chatKey = [currentUser.id, contact.id].sort().join('-');
+            const sharedKey = sharedKeys[chatKey];
 
-        const encryptedText = await encryptMessage(text, sharedKey);
-        const newMessage = { id: `msg-${Date.now()}`, senderId: session.user.id, text: encryptedText, timestamp: Date.now(), status: MessageStatus.SENT, chatKey };
+            if (!sharedKey) {
+                console.error("Shared key not available for this contact.");
+                return;
+            }
+            
+            const encryptedText = await encryptMessage(text, sharedKey);
+            
+            const newMessage = {
+                id: crypto.randomUUID(),
+                chatKey: chatKey,
+                senderId: currentUser.id,
+                recipientId: selectedContactId,
+                text: encryptedText,
+                timestamp: Date.now(),
+                status: MessageStatus.SENT,
+            };
+
+            setMessages(prev => ({
+                ...prev,
+                [chatKey]: [...(prev[chatKey] || []), newMessage]
+            }));
+
+            socketService.sendMessage(newMessage, selectedContactId);
+        };
         
-        socketService.sendMessage(newMessage, selectedContactId);
-        setMessages(prev => ({ ...prev, [chatKey]: [...(prev[chatKey] || []), newMessage] }));
-      };
-      
-      if (!session) {
-        return <ConnectionView onConnect={(user, url) => setSession({ user, serverUrl: url })} allUsers={ALL_USERS} />;
-      }
-      
-      const { user: currentUser } = session;
-      const displayedContacts = ALL_USERS.filter(c => c.id !== currentUser.id);
-      const selectedContact = ALL_USERS.find(c => c.id === selectedContactId);
-      const chatKey = selectedContactId ? getChatKey(currentUser.id, selectedContactId) : null;
-      const selectedContactMessages = chatKey ? messages[chatKey] || [] : [];
-      
-      return (
-        <div className="bg-slate-900 text-slate-300 h-screen w-screen flex antialiased">
-          <div className={`w-full md:w-auto md:flex flex-col h-full ${selectedContactId ? 'hidden md:flex' : 'flex'}`}>
-            <ContactList contacts={displayedContacts} messages={messages} selectedContactId={selectedContactId} onSelectContact={setSelectedContactId} currentUser={currentUser} onDisconnect={handleDisconnect} />
-          </div>
-           <div className={`w-full h-full ${selectedContactId ? 'flex' : 'hidden md:flex'}`}>
-            <ChatWindow contact={selectedContact} messages={selectedContactMessages} onSendMessage={handleSendMessage} currentUser={currentUser} sharedKey={chatKey ? sharedKeys[chatKey] : null} />
-          </div>
-        </div>
-      );
-    }
-    
-    // --- FROM index.tsx ---
-    const rootElement = document.getElementById('root');
-    const root = ReactDOM.createRoot(rootElement);
-    root.render(<React.StrictMode><App /></React.StrictMode>);
+        if (!session.currentUser) {
+            return <ConnectionView onConnect={handleConnect} allUsers={ALL_USERS} />;
+        }
+        
+        const { currentUser } = session;
+        const contacts = ALL_USERS.filter(u => u.id !== currentUser.id);
+        const selectedContact = contacts.find(c => c.id === selectedContactId);
+        const chatKey = selectedContact ? [currentUser.id, selectedContact.id].sort().join('-') : null;
+        const currentMessages = chatKey ? messages[chatKey] || [] : [];
+        
+        return (
+            <div className="h-screen w-screen bg-slate-800 text-slate-200 flex overflow-hidden">
+                <ContactList
+                    contacts={contacts}
+                    messages={messages}
+                    selectedContactId={selectedContactId}
+                    onSelectContact={handleSelectContact}
+                    currentUser={currentUser}
+                    onDisconnect={handleDisconnect}
+                />
+                <ChatWindow
+                    contact={selectedContact}
+                    messages={currentMessages}
+                    onSendMessage={handleSendMessage}
+                    currentUser={currentUser}
+                    sharedKey={chatKey ? sharedKeys[chatKey] : null}
+                />
+            </div>
+        );
+    };
+
+    // --- RENDER THE APP ---
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<App />);
   </script>
 </body>
 </html>
