@@ -60,27 +60,34 @@ wss.on('connection', (ws, req) => {
 
       if (data.type === 'sendMessage') {
         const { message: msg, recipientId } = data.payload;
+        const senderId = msg.senderId;
         const chatKey = msg.chatKey;
 
         // Store the message
         if (!messageHistory[chatKey]) {
           messageHistory[chatKey] = [];
         }
-        messageHistory[chatKey].push(msg);
+        // Avoid storing duplicates if history is already synced
+        if (!messageHistory[chatKey].some(m => m.id === msg.id)) {
+            messageHistory[chatKey].push(msg);
+        }
         
-        // Forward the message to the recipient if they are online
+        // Get sockets for both participants
         const recipientSocket = clients.get(recipientId);
+        const senderSocket = clients.get(senderId);
+
+        // Send the message to the recipient if they are online
         if (recipientSocket && recipientSocket.readyState === recipientSocket.OPEN) {
           recipientSocket.send(JSON.stringify({ type: 'newMessage', payload: msg }));
-          console.log(`Message forwarded from ${msg.senderId} to ${recipientId}`);
+          console.log(`Message sent from ${senderId} to ${recipientId}`);
         } else {
             console.log(`Recipient ${recipientId} is not online. Message stored.`);
         }
 
-        // Also send the message back to the sender to confirm it was processed
-        const senderSocket = clients.get(msg.senderId);
-        if(senderSocket && senderSocket.readyState === senderSocket.OPEN) {
-            // (Optional) You could add a confirmation message type here
+        // Send the message back to the sender for synchronization
+        if (senderSocket && senderSocket.readyState === senderSocket.OPEN) {
+          senderSocket.send(JSON.stringify({ type: 'newMessage', payload: msg }));
+           console.log(`Message echoed back to sender ${senderId}`);
         }
       }
     } catch (e) {

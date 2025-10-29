@@ -43,67 +43,17 @@
       SMART_REPLY: 'Smarte Antworten',
     };
 
-    // --- FROM services/cryptoService.ts ---
-    function arrayBufferToBase64(buffer) {
-        let binary = '';
-        const bytes = new Uint8Array(buffer);
-        for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return window.btoa(binary);
-    }
-    function base64ToArrayBuffer(base64) {
-        const binary_string = window.atob(base64);
-        const len = binary_string.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binary_string.charCodeAt(i);
-        }
-        return bytes.buffer;
-    }
-    async function importPrivateKey(jwk) {
-        return await crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
-    }
-    async function importPublicKey(jwk) {
-        return await crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, true, []);
-    }
-    async function deriveSharedKey(privateKeyJwk, publicKeyJwk) {
-        const privateKey = await importPrivateKey(privateKeyJwk);
-        const publicKey = await importPublicKey(publicKeyJwk);
-        return await crypto.subtle.deriveKey({ name: 'ECDH', public: publicKey }, privateKey, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
-    }
-    async function encryptMessage(text, key) {
-        const encodedText = new TextEncoder().encode(text);
-        const iv = crypto.getRandomValues(new Uint8Array(12));
-        const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encodedText);
-        const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-        combined.set(iv, 0);
-        combined.set(new Uint8Array(ciphertext), iv.length);
-        return arrayBufferToBase64(combined.buffer);
-    }
-    async function decryptMessage(encryptedBase64, key) {
-        const combined = base64ToArrayBuffer(encryptedBase64);
-        const iv = combined.slice(0, 12);
-        const ciphertext = combined.slice(12);
-        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: new Uint8Array(iv) }, key, ciphertext);
-        return new TextDecoder().decode(decrypted);
-    }
-    
     // --- FROM constants.ts ---
     const ALL_USERS = [
       { 
         id: 'user-chris', 
         name: 'Chris', 
         avatarUrl: 'https://i.pravatar.cc/100?u=chris', 
-        privateKey: {"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2E4qopB4EAvd9WJPSuFrIvLgnoRO4CFof0w","d":"870MB6gfuTJ4HtUnUvYMyJpr5eLHNWVojETSlwejslM"},
-        publicKey: {"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2E4qopB4EAvd9WJPSuFrIvLgnoRO4CFof0w"}
       },
       { 
         id: 'user-benni', 
         name: 'Benni', 
         avatarUrl: 'https://i.pravatar.cc/100?u=benni', 
-        privateKey: {"kty":"EC","crv":"P-256","x":"w_n92nOfpG5yALEJp4T8yAuluohhX24u3nAdwS5i-iM","y":"D1-a4I9eA03_Ab01Pz7wz8h2oKLFUf-aL2XIUf2bW78","d":"BIVVbzgj7w2u1W-QUXBJ2Gy-s6J-rZ7o6g-vLVl5A_g"},
-        publicKey: {"kty":"EC","crv":"P-256","x":"w_n92nOfpG5yALEJp4T8yAuluohhX24u3nAdwS5i-iM","y":"D1-a4I9eA03_Ab01Pz7wz8h2oKLFUf-aL2XIUf2bW78"}
       }
     ];
     const INITIAL_USER = ALL_USERS[0];
@@ -187,7 +137,6 @@
     })();
     
     // --- FROM components/icons.tsx ---
-    const LockIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" /></svg>);
     const SendIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>);
     const SparklesIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>);
     const CheckIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>);
@@ -196,21 +145,7 @@
     const XCircleIcon = ({ className }) => (<svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>);
 
     // --- FROM components/MessageBubble.tsx ---
-    const MessageBubble = ({ message, currentUserId, sharedKey }) => {
-      const [decryptedText, setDecryptedText] = React.useState('');
-      const [isDecrypting, setIsDecrypting] = React.useState(true);
-
-      React.useEffect(() => {
-        // Simulate decryption for UI effect, but show plain text
-        setIsDecrypting(true);
-        const timer = setTimeout(() => {
-            setDecryptedText(message.text || "");
-            setIsDecrypting(false);
-        }, 300); // Short delay to simulate decryption
-
-        return () => clearTimeout(timer); // Cleanup on unmount
-      }, [message.text]);
-
+    const MessageBubble = ({ message, currentUserId }) => {
       const MessageStatusIndicator = ({ status }) => {
           switch (status) {
               case MessageStatus.SENDING: return <ClockIcon className="h-4 w-4 text-slate-400" />;
@@ -229,7 +164,7 @@
       return (
         <div className={`flex items-end gap-2 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
           <div className={`max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-2xl ${bubbleClasses}`}>
-            {isDecrypting ? <p className="italic text-slate-400">Entschlüsseln...</p> : <p className="break-words">{decryptedText}</p>}
+            <p className="break-words">{message.text}</p>
             <div className="flex items-center justify-end gap-1 mt-1">
               <span className="text-xs opacity-70">{time}</span>
               {isCurrentUser && <MessageStatusIndicator status={message.status} />}
@@ -242,7 +177,7 @@
     // --- FROM components/MessageInput.tsx ---
     const MessageInput = ({ onSendMessage, conversationContext }) => {
       const [text, setText] = React.useState('');
-      const [isAiMenuOpen, setIsAiMenuOpen] = React.useState(false);
+      const [isAiMenuOpen, setIsAiMenuOpen] => React.useState(false);
       const [isLoadingAi, setIsLoadingAi] = React.useState(false);
       const [smartReplies, setSmartReplies] = React.useState([]);
 
@@ -261,8 +196,7 @@
         try {
             switch(action) {
                 case AIFeature.SMART_REPLY:
-                    const decryptedContext = conversationContext.map(m => `Sprecher ${m.senderId}: ${m.decryptedText || ''}`);
-                    const replies = await geminiService.getSmartReplies(decryptedContext);
+                    const replies = await geminiService.getSmartReplies(conversationContext);
                     setSmartReplies(replies);
                     break;
             }
@@ -306,7 +240,7 @@
               <img src={contact.avatarUrl} alt={contact.name} className="h-12 w-12 rounded-full mr-4" />
               <div className="flex-1 overflow-hidden">
                 <div className="flex justify-between items-center"><h3 className="font-semibold text-slate-100">{contact.name}</h3><span className="text-xs text-slate-400">{lastMessageTime}</span></div>
-                <p className="text-sm text-slate-400 truncate italic">{lastMessage ? 'Verschlüsselte Nachricht...' : 'Keine Nachrichten'}</p>
+                <p className="text-sm text-slate-400 truncate">{lastMessage ? lastMessage.text : 'Keine Nachrichten'}</p>
               </div>
             </li>
           );
@@ -330,7 +264,7 @@
     };
 
     // --- FROM components/ChatWindow.tsx ---
-    const ChatWindow = ({ contact, messages, onSendMessage, currentUser, sharedKey }) => {
+    const ChatWindow = ({ contact, messages, onSendMessage, currentUser }) => {
         const messagesEndRef = React.useRef(null);
         React.useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -338,7 +272,7 @@
             return (
               <main className="flex-1 bg-slate-800/50 hidden md:flex flex-col">
                 <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
-                    <LockIcon className="h-16 w-16 mb-4" />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     <h2 className="text-xl font-semibold text-slate-300">Willkommen</h2>
                     <p className="max-w-sm mt-2">Wähle einen Kontakt aus, um eine Unterhaltung zu beginnen.</p>
                 </div>
@@ -352,12 +286,11 @@
                     <img src={contact.avatarUrl} alt={contact.name} className="h-10 w-10 rounded-full mr-4" />
                     <div>
                         <h3 className="text-lg font-semibold text-white">{contact.name}</h3>
-                        <div className="flex items-center text-xs text-green-400 mt-1"><LockIcon className="h-3 w-3 mr-1" /><span>End-to-End-verschlüsselt</span></div>
                     </div>
                 </header>
                 <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
                     <div className="flex flex-col gap-4">
-                        {messages.map((msg) => <MessageBubble key={msg.id} message={msg} currentUserId={currentUser.id} sharedKey={sharedKey} />)}
+                        {messages.map((msg) => <MessageBubble key={msg.id} message={msg} currentUserId={currentUser.id} />)}
                         <div ref={messagesEndRef} />
                     </div>
                 </div>
@@ -388,7 +321,7 @@
         return (
             <div className="w-screen h-screen bg-slate-900 flex items-center justify-center p-4">
                 <div className="w-full max-w-md bg-slate-800 text-slate-200 rounded-2xl shadow-xl p-8 border border-slate-700">
-                    <div className="text-center mb-8"><h1 className="text-3xl font-bold text-white">Gemini Secure Messenger</h1><p className="text-slate-400 mt-2">Sicher verbinden</p></div>
+                    <div className="text-center mb-8"><h1 className="text-3xl font-bold text-white">Gemini Messenger</h1><p className="text-slate-400 mt-2">Verbinden</p></div>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
                             <label htmlFor="user-select" className="block text-sm font-medium text-slate-300 mb-2">1. Wer sind Sie?</label>
@@ -429,17 +362,21 @@
         const [session, setSession] = React.useState({ currentUser: null, serverUrl: null });
         const [selectedContactId, setSelectedContactId] = React.useState(null);
         const [messages, setMessages] = React.useState({});
-        const [sharedKeys, setSharedKeys] = React.useState({});
 
         const handleConnect = async (user, url) => {
             await socketService.connect(
                 user.id,
                 url,
                 (newMessage) => { // onMessage
-                    setMessages(prev => ({
-                        ...prev,
-                        [newMessage.chatKey]: [...(prev[newMessage.chatKey] || []), newMessage]
-                    }));
+                    setMessages(prev => {
+                        const chatKey = newMessage.chatKey;
+                        const existingMessages = prev[chatKey] || [];
+                        // Prevent duplicate messages if the server echoes back the sender's message
+                        if (existingMessages.some(m => m.id === newMessage.id)) {
+                            return prev;
+                        }
+                        return { ...prev, [chatKey]: [...existingMessages, newMessage] };
+                    });
                 },
                 (initialMessages) => { // onInitialMessages
                     setMessages(initialMessages);
@@ -453,33 +390,19 @@
             setSession({ currentUser: null, serverUrl: null });
             setSelectedContactId(null);
             setMessages({});
-            setSharedKeys({});
         };
 
-        const handleSelectContact = async (contactId) => {
+        const handleSelectContact = (contactId) => {
             setSelectedContactId(contactId);
-            const contact = ALL_USERS.find(u => u.id === contactId);
-            if (!contact || !session.currentUser) return;
-
-            const keyId = [session.currentUser.id, contact.id].sort().join('-');
-            if (!sharedKeys[keyId]) {
-                try {
-                    const key = await deriveSharedKey(session.currentUser.privateKey, contact.publicKey);
-                    setSharedKeys(prev => ({ ...prev, [keyId]: key }));
-                } catch (error) {
-                    console.error("Failed to derive shared key:", error);
-                }
-            }
         };
 
-        const handleSendMessage = async (text) => {
+        const handleSendMessage = (text) => {
             const { currentUser } = session;
             if (!currentUser || !selectedContactId) return;
 
             const contact = ALL_USERS.find(u => u.id === selectedContactId);
             const chatKey = [currentUser.id, contact.id].sort().join('-');
             
-            // Encryption is bypassed. We send plain text.
             const newMessage = {
                 id: crypto.randomUUID(),
                 chatKey: chatKey,
@@ -487,7 +410,7 @@
                 recipientId: selectedContactId,
                 text: text,
                 timestamp: Date.now(),
-                status: MessageStatus.SENT,
+                status: MessageStatus.SENDING,
             };
 
             setMessages(prev => ({
@@ -523,7 +446,6 @@
                     messages={currentMessages}
                     onSendMessage={handleSendMessage}
                     currentUser={currentUser}
-                    sharedKey={chatKey ? sharedKeys[chatKey] : null}
                 />
             </div>
         );
