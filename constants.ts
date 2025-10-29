@@ -1,4 +1,4 @@
-import { User, Message, MessageStatus } from './types';
+import { User, Message, MessageStatus } from './types.ts';
 
 // IMPORTANT: These keys are for demonstration purposes only.
 // In a real application, keys would be generated on the client and never shared.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Contact, Message, User } from '../types';
+import { Contact, Message, User } from '../types.ts';
 
 interface ContactListProps {
   contacts: Contact[];

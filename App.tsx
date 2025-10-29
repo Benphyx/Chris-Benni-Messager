@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ContactList } from './components/ContactList';
-import { ChatWindow } from './components/ChatWindow';
-import { ALL_USERS, INITIAL_USER } from './constants';
-import { Message, MessageStatus, User } from './types';
-import { deriveSharedKey, encryptMessage } from './services/cryptoService';
-import { socketService } from './services/socketService';
-import { ConnectionView } from './components/ConnectionView';
+import { ContactList } from './components/ContactList.tsx';
+import { ChatWindow } from './components/ChatWindow.tsx';
+import { ALL_USERS, INITIAL_USER } from './constants.ts';
+import { Message, MessageStatus, User } from './types.ts';
+import { deriveSharedKey, encryptMessage } from './services/cryptoService.ts';
+import { socketService } from './services/socketService.ts';
+import { ConnectionView } from './components/ConnectionView.tsx';
 
 interface Session {
   user: User;

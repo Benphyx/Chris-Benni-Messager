@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Message, MessageStatus } from '../types';
-import { CheckIcon, DoubleCheckIcon, ClockIcon, XCircleIcon, LockIcon } from './icons';
-import { decryptMessage } from '../services/cryptoService';
+import { Message, MessageStatus } from '../types.ts';
+import { CheckIcon, DoubleCheckIcon, ClockIcon, XCircleIcon, LockIcon } from './icons.tsx';
+import { decryptMessage } from '../services/cryptoService.ts';
 
 interface MessageBubbleProps {
   message: Message;

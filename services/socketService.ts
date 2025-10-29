@@ -1,4 +1,4 @@
-import { Message } from '../types';
+import { Message } from '../types.ts';
 
 class SocketService {
   private ws: WebSocket | null = null;

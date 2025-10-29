@@ -1,8 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import { Contact, Message, User } from '../types';
-import { MessageBubble } from './MessageBubble';
-import { MessageInput } from './MessageInput';
-import { LockIcon } from './icons';
+import { Contact, Message, User } from '../types.ts';
+import { MessageBubble } from './MessageBubble.tsx';
+import { MessageInput } from './MessageInput.tsx';
+import { LockIcon } from './icons.tsx';
 
 interface ChatWindowProps {
   contact: Contact | undefined;

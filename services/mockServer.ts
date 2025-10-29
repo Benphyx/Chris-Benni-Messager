@@ -1,6 +1,6 @@
-import { MOCK_MESSAGES, ALL_USERS } from '../constants';
-import { Message, User } from '../types';
-import { deriveSharedKey, encryptMessage } from './cryptoService';
+import { MOCK_MESSAGES, ALL_USERS } from '../constants.ts';
+import { Message, User } from '../types.ts';
+import { deriveSharedKey, encryptMessage } from './cryptoService.ts';
 
 type Subscriber = (payload: { chatKey: string, message: Message }) => void;
 

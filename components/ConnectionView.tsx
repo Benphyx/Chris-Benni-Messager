@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { User } from '../types';
-import { INITIAL_USER } from '../constants';
+import { User } from '../types.ts';
+import { INITIAL_USER } from '../constants.ts';
 
 interface ConnectionViewProps {
     onConnect: (user: User, url: string) => void;

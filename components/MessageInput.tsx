@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { AIFeature } from '../types';
-import { SparklesIcon, SendIcon } from './icons';
-import * as geminiService from '../services/geminiService';
+import { AIFeature } from '../types.ts';
+import { SparklesIcon, SendIcon } from './icons.tsx';
+import * as geminiService from '../services/geminiService.ts';
 
 interface MessageInputProps {
   onSendMessage: (text: string) => void;
